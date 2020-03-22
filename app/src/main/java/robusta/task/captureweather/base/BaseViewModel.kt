@@ -10,6 +10,11 @@ import kotlinx.coroutines.SupervisorJob
 import robusta.task.captureweather.common.Event
 
 abstract class BaseViewModel<VS, VE> : ViewModel(), CoroutineScope {
+    init {
+        initViewState()
+    }
+
+    abstract fun initViewState()
 
     private val job = SupervisorJob()
     override val coroutineContext = Dispatchers.IO + job
@@ -17,14 +22,14 @@ abstract class BaseViewModel<VS, VE> : ViewModel(), CoroutineScope {
 
     private val _viewState = MutableLiveData<Event<VS>>()
     val viewState: LiveData<Event<VS>> get() = _viewState
-    private fun postState(state: Event<VS>) {
-        _viewState.postValue(state)
+    protected fun postState(state: VS) {
+        _viewState.postValue(Event(state))
     }
 
-    private fun viewStateValue() = _viewState.value?.peekContent()
+    protected fun viewStateValue() = _viewState.value!!.peekContent()
 
 
-    abstract fun postEvent(event: Event<VE>)
+    abstract fun postEvent(event: VE)
 
     @CallSuper
     override fun onCleared() {

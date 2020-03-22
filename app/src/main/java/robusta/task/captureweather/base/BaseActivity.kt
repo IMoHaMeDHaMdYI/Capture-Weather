@@ -5,5 +5,5 @@ import androidx.lifecycle.MutableLiveData
 import robusta.task.captureweather.common.Event
 
 open class BaseActivity<VE> : AppCompatActivity() {
-    private val viewEvent = MutableLiveData<Event<VE>>()
+    val viewEvent = MutableLiveData<Event<VE>>()
 }
