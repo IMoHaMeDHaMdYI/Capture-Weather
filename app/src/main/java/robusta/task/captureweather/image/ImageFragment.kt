@@ -198,18 +198,22 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     }
 
     private var locationManager: LocationManager? = null
-    private var gps_enabled = false
-    private var network_enabled = false
 
     private fun checkGPSStatus() {
+        var gps_enabled = false
+        var network_enabled = false
         if (locationManager == null) {
             locationManager =
                 requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager?
         }
         try {
             gps_enabled = locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)
-            network_enabled = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
         } catch (ex: java.lang.Exception) {
+
+        }
+        try {
+            network_enabled = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        } catch (e: java.lang.Exception) {
 
         }
         if (!gps_enabled && !network_enabled) {

@@ -9,11 +9,7 @@ class HistoryViewModel(private val fileHelper: FileHelper) : ViewModel() {
     private val _paths = MutableLiveData<List<ImagePath>>()
     val paths: LiveData<List<ImagePath>> get() = _paths
 
-    init {
-        getFiles()
-    }
-
-    private fun getFiles() {
+    fun getFiles() {
         _paths.value = fileHelper.getDirectoryFiles().map {
             ImagePath(it.path)
         }
