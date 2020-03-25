@@ -2,29 +2,32 @@ package robusta.task.captureweather.image
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
-import android.graphics.BitmapFactory
-import android.graphics.Matrix
 import android.os.Bundle
+import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
-import androidx.exifinterface.media.ExifInterface
-import androidx.fragment.app.Fragment
+import androidx.lifecycle.Observer
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.android.synthetic.main.fragment_image.*
+import org.koin.android.viewmodel.ext.android.viewModel
 import robusta.task.captureweather.R
+import robusta.task.captureweather.base.BaseFragment
+import robusta.task.captureweather.common.extenstions.TAG
+import robusta.task.captureweather.common.extenstions.makeGone
+import robusta.task.captureweather.common.extenstions.makeVisible
+import robusta.task.captureweather.common.extenstions.toast
 import robusta.task.captureweather.common.utils.getBitmap
 
-class ImageFragment : Fragment() {
+class ImageFragment : BaseFragment<ViewEvent>() {
+    private val viewModel: ImageViewModel by viewModel()
     private val permissionsRequest = 0
     private var permissionGranted = false
     private val permissions = arrayOf(
-        Manifest.permission.CAMERA,
-        Manifest.permission.READ_EXTERNAL_STORAGE,
-        Manifest.permission.WRITE_EXTERNAL_STORAGE
+        Manifest.permission.ACCESS_COARSE_LOCATION,
+        Manifest.permission.ACCESS_FINE_LOCATION
     )
 
     override fun onCreateView(
@@ -38,18 +41,40 @@ class ImageFragment : Fragment() {
 
     lateinit var path: String
 
-    private var fusedLocation: FusedLocationProviderClient? = null
+    private lateinit var fusedLocation: FusedLocationProviderClient
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
+        fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         path =
             requireArguments().getString(IMAGE_PATH) ?: throw IllegalStateException(
                 "This Fragment must be initialized using ImageFragment.createWithFile(path: String)"
             )
         askForPermission()
-        img.bitmap = getBitmap(path)
-        img.text = "Hello Bitches"
         setCancellationListener()
-        fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
+
+        img.bitmap = getBitmap(path)
+        img.text = "Loading..."
+        viewModel.viewState.observe(viewLifecycleOwner, Observer {
+            it.peekContent().let {
+                it.weather?.main?.let {
+                    val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
+                    img.text = printedText
+                }
+                if (it.loadingWeather) {
+                    pb.makeVisible()
+                } else {
+                    pb.makeGone()
+                }
+                if (it.exception != null) {
+                    tvError.makeVisible()
+                } else {
+                    tvError.makeGone()
+                }
+            }
+        })
+        viewEvent.observe(viewLifecycleOwner, Observer {
+            it.getContentIfNotHandled()?.let { viewModel.postEvent(it) }
+        })
     }
 
     private fun setCancellationListener() {
@@ -63,11 +88,12 @@ class ImageFragment : Fragment() {
             ContextCompat.checkSelfPermission(
                 requireContext(),
                 it
-            ) == PackageManager.PERMISSION_GRANTED
+            ) != PackageManager.PERMISSION_GRANTED
         }
         if (neededPermissions.isNotEmpty()) {
             requestPermissions(neededPermissions.toTypedArray(), permissionsRequest)
         } else {
+            setLocationListener()
             permissionGranted = true
         }
     }
@@ -80,7 +106,22 @@ class ImageFragment : Fragment() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == permissionsRequest && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             permissionGranted = true
+            setLocationListener()
+        }
+    }
 
+    private fun setLocationListener() {
+        fusedLocation.lastLocation.addOnSuccessListener {
+            it?.let { location ->
+                Log.d(TAG, "hereee")
+                postEvent(ViewEvent.GetWeather(location.latitude, location.longitude))
+                return@addOnSuccessListener
+            }
+            context?.toast(getString(R.string.error_detecting_location))
+
+        }.addOnFailureListener {
+            context?.toast(getString(R.string.error_detecting_location))
+            it.printStackTrace()
         }
     }
 

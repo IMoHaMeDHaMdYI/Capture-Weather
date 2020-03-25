@@ -1,3 +1,4 @@
 <resources>
     <string name="app_name">Capture Weather</string>
+    <string name="error_detecting_location">حدث خطأ أثنا تحديد الموقع</string>
 </resources>

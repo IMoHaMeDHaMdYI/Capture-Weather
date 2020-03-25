@@ -59,9 +59,6 @@ class TextOverlayImageView(context: Context, attributeSet: AttributeSet) :
                 bitmap?.width ?: 200
             }
         }
-        bitmap?.let {
-            textLayout = createStaticLayout(text, 0, text.length, it.width)
-        }
         //Measure Height
         height =
             if (heightMode == MeasureSpec.EXACTLY || heightMode == MeasureSpec.AT_MOST) { //Must be this size
@@ -79,6 +76,8 @@ class TextOverlayImageView(context: Context, attributeSet: AttributeSet) :
             val bitmapLeft = (width - bitmap.width) / 2f
             val bitmapTop = (height - bitmap.height) / 2f
             canvas.drawBitmap(bitmap, bitmapLeft, bitmapTop, imagePaint)
+            Log.d(TAG, text)
+            textLayout = createStaticLayout(text, 0, text.length, width)
             textLayout?.let {
                 val textLeft = bitmapLeft + (bitmap.width - it.width) / 2
                 Log.d(TAG, "bitmap left = $bitmapLeft ,, ${it.width}")
