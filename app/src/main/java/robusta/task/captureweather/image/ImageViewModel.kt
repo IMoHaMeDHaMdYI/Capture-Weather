@@ -48,10 +48,12 @@ class ImageViewModel(
     }
 
     private fun saveBitmapFile(fileHelper: FileHelper, bitmap: Bitmap) = launch {
+        postState(viewStateValue().copy(loadingWeather = true))
         postState(
             viewStateValue().copy(
                 file = saveBitmap(fileHelper, bitmap),
-                loadingWeather = true
+                loadingWeather = false,
+                imageSaved = true
             )
         )
     }

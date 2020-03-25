@@ -9,6 +9,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.Observer
+import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.android.synthetic.main.fragment_image.*
@@ -33,7 +34,6 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     }
     private val permissionsRequest = 0
     private var permissionGranted = false
-    private val fileHelper: FileHelper by inject()
     private val permissions = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -58,29 +58,41 @@ class ImageFragment : BaseFragment<ViewEvent>() {
             requireArguments().getString(IMAGE_PATH) ?: throw IllegalStateException(
                 "This Fragment must be initialized using ImageFragment.createWithFile(path: String)"
             )
-        askForPermission()
+        if (viewModel.reload) {
+            btnFacebook.makeGone()
+            btnTwitter.makeGone()
+            askForPermission()
+        } else {
+            Glide.with(requireContext())
+                .load(path)
+                .into(img)
+        }
         setCancellationListener()
         initViews()
         viewModel.viewState.observe(viewLifecycleOwner, Observer {
             it.peekContent().let {
-                if (viewModel.reload) {
-                    btnFacebook.makeGone()
-                    btnTwitter.makeGone()
-                }
-                it.weather?.let {
-                    it.main.let {
-                        val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
-                        img.text = printedText
-                        val bitmap =
-                            ImageDrawer().draw(getBitmap(path), printedText, requireContext())
-                        postEvent(ViewEvent.SaveImage(bitmap))
-                    }
-                    btnFacebook.makeVisible()
-                    btnTwitter.makeVisible()
-                }
                 if (it.loadingWeather) {
                     pb.makeVisible()
                 } else {
+                    if (!it.imageSaved)
+                        it.weather?.let {
+                            it.main.let {
+                                val printedText =
+                                    "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
+                                val bitmap =
+                                    ImageDrawer().draw(
+                                        getBitmap(path),
+                                        printedText,
+                                        requireContext()
+                                    )
+                                Glide.with(requireContext())
+                                    .load(bitmap)
+                                    .into(img)
+                                postEvent(ViewEvent.SaveImage(bitmap))
+                            }
+                            btnFacebook.makeVisible()
+                            btnTwitter.makeVisible()
+                        }
                     pb.makeGone()
                 }
                 if (it.exception != null) {
@@ -99,13 +111,12 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     }
 
     private fun initViews() {
-        img.bitmap = getBitmap(path)
         btnFacebook.setOnClickListener {
             try {
                 startActivity(
                     shareFacebook(
                         requireContext(),
-                        requireContext().packageName + ".common.utils.ImageProvider",
+                        requireContext().packageName + ImageProvider.PACKAGE,
                         path
                     )
                 )
@@ -118,13 +129,12 @@ class ImageFragment : BaseFragment<ViewEvent>() {
                 startActivity(
                     shareTwitter(
                         requireContext(),
-                        requireContext().packageName + ".common.utils.ImageProvider",
+                        requireContext().packageName + ImageProvider.PACKAGE,
                         path
                     )
                 )
             } catch (e: Exception) {
                 requireContext().toast(getString(R.string.dont_have_twitter))
-
             }
         }
     }

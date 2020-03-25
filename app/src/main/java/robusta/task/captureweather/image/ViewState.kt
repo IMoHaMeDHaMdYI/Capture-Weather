@@ -8,6 +8,7 @@ data class ViewState(
     val exception: Exception? = null,
     val weather: WeatherResponse? = null,
     val loadingWeather: Boolean = false,
-    val file: File? =null
+    val imageSaved: Boolean = false,
+    val file: File? = null
 ) {
 }
