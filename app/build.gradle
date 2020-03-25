@@ -80,4 +80,11 @@ dependencies {
 
     // location
     implementation 'com.google.android.gms:play-services-location:17.0.0'
+
+    // Facebook
+
+    // Facebook Core only (Analytics)
+    implementation 'com.facebook.android:facebook-core:5.15.3'
+    // Facebook Share only
+    implementation 'com.facebook.android:facebook-share:5.15.3'
 }

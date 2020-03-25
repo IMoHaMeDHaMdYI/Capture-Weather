@@ -20,6 +20,10 @@ import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
 import robusta.task.captureweather.common.extenstions.toast
 import robusta.task.captureweather.common.utils.getBitmap
+import robusta.task.captureweather.common.utils.shareFacebook
+import robusta.task.captureweather.common.utils.shareImage
+import robusta.task.captureweather.common.utils.shareTwitter
+import java.lang.Exception
 
 class ImageFragment : BaseFragment<ViewEvent>() {
     private val viewModel: ImageViewModel by viewModel()
@@ -54,11 +58,45 @@ class ImageFragment : BaseFragment<ViewEvent>() {
 
         img.bitmap = getBitmap(path)
         img.text = "Loading..."
+        btnFacebook.setOnClickListener {
+            try {
+                startActivity(
+                    shareFacebook(
+                        requireContext(),
+                        requireContext().packageName + ".common.utils.ImageProvider",
+                        path
+                    )
+                )
+            } catch (e: Exception) {
+                requireContext().toast(getString(R.string.dont_have_facebook))
+            }
+        }
+        btnTwitter.setOnClickListener {
+            try {
+                startActivity(
+                    shareTwitter(
+                        requireContext(),
+                        requireContext().packageName + ".common.utils.ImageProvider",
+                        path
+                    )
+                )
+            } catch (e: Exception) {
+                requireContext().toast(getString(R.string.dont_have_twitter))
+
+            }
+        }
         viewModel.viewState.observe(viewLifecycleOwner, Observer {
             it.peekContent().let {
-                it.weather?.main?.let {
-                    val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
-                    img.text = printedText
+                btnFacebook.makeGone()
+                btnTwitter.makeGone()
+                it.weather?.let {
+                    it.main.let {
+                        val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
+                        img.text = printedText
+                    }
+
+                    btnFacebook.makeVisible()
+                    btnTwitter.makeVisible()
                 }
                 if (it.loadingWeather) {
                     pb.makeVisible()

@@ -1,4 +1,9 @@
 <resources>
     <string name="app_name">Capture Weather</string>
     <string name="error_detecting_location">حدث خطأ أثنا تحديد الموقع</string>
+    <string name="facebook">Facebook</string>
+    <string name="twitter">Twitter</string>
+    <string name="dont_have_twitter">You Don\'t Have Twitter</string>
+    <string name="dont_have_facebook">You Don\'t Have Facebook</string>
+    <string name="save">Save</string>
 </resources>

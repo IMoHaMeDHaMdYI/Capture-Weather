@@ -28,6 +28,19 @@
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
         </activity>
+
+        <provider
+            android:name=".common.utils.ImageProvider"
+            android:authorities="robusta.task.captureweather.common.utils.ImageProvider"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/provider_paths" />
+            <meta-data
+                android:name="robusta.task.captureweather.common.utils.ImageProvider"
+                android:resource="@xml/provider_paths" />
+        </provider>
     </application>
 
 </manifest>
