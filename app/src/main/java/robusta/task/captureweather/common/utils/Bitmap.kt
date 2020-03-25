@@ -4,6 +4,9 @@ import android.graphics.Bitmap
 import android.graphics.BitmapFactory
 import android.graphics.Matrix
 import androidx.exifinterface.media.ExifInterface
+import java.io.File
+import java.io.FileOutputStream
+import java.lang.Exception
 
 fun getBitmap(path: String): Bitmap {
     val exif = ExifInterface(path)
@@ -39,4 +42,18 @@ fun exifToDegrees(exifOrientation: Int): Int {
         return 270
     }
     return 0
+}
+
+suspend fun saveBitmap(fileHelper: FileHelper, bitmap: Bitmap): File {
+    val path = fileHelper.generateFileName("png")
+    val op = FileOutputStream(path)
+    try {
+        bitmap.compress(Bitmap.CompressFormat.PNG, 100, op)
+        op.flush()
+    } catch (e: Exception) {
+
+    } finally {
+        op.close()
+    }
+    return File(path)
 }

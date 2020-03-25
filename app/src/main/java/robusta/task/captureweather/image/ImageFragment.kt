@@ -12,23 +12,28 @@ import androidx.lifecycle.Observer
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.android.synthetic.main.fragment_image.*
+import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
+import org.koin.core.parameter.parametersOf
 import robusta.task.captureweather.R
 import robusta.task.captureweather.base.BaseFragment
 import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
 import robusta.task.captureweather.common.extenstions.toast
-import robusta.task.captureweather.common.utils.getBitmap
-import robusta.task.captureweather.common.utils.shareFacebook
-import robusta.task.captureweather.common.utils.shareImage
-import robusta.task.captureweather.common.utils.shareTwitter
-import java.lang.Exception
+import robusta.task.captureweather.common.utils.*
 
 class ImageFragment : BaseFragment<ViewEvent>() {
-    private val viewModel: ImageViewModel by viewModel()
+    private val viewModel: ImageViewModel by viewModel {
+        parametersOf(
+            requireArguments().getBoolean(
+                RELOAD
+            )
+        )
+    }
     private val permissionsRequest = 0
     private var permissionGranted = false
+    private val fileHelper: FileHelper by inject()
     private val permissions = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
         Manifest.permission.ACCESS_FINE_LOCATION
@@ -55,9 +60,46 @@ class ImageFragment : BaseFragment<ViewEvent>() {
             )
         askForPermission()
         setCancellationListener()
+        initViews()
+        viewModel.viewState.observe(viewLifecycleOwner, Observer {
+            it.peekContent().let {
+                if (viewModel.reload) {
+                    btnFacebook.makeGone()
+                    btnTwitter.makeGone()
+                }
+                it.weather?.let {
+                    it.main.let {
+                        val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
+                        img.text = printedText
+                        val bitmap =
+                            ImageDrawer().draw(getBitmap(path), printedText, requireContext())
+                        postEvent(ViewEvent.SaveImage(bitmap))
+                    }
+                    btnFacebook.makeVisible()
+                    btnTwitter.makeVisible()
+                }
+                if (it.loadingWeather) {
+                    pb.makeVisible()
+                } else {
+                    pb.makeGone()
+                }
+                if (it.exception != null) {
+                    tvError.makeVisible()
+                } else {
+                    tvError.makeGone()
+                }
+            }
+        })
+        viewEvent.observe(viewLifecycleOwner, Observer {
+            it.getContentIfNotHandled()?.let {
+                if (viewModel.reload)
+                    viewModel.postEvent(it)
+            }
+        })
+    }
 
+    private fun initViews() {
         img.bitmap = getBitmap(path)
-        img.text = "Loading..."
         btnFacebook.setOnClickListener {
             try {
                 startActivity(
@@ -85,34 +127,6 @@ class ImageFragment : BaseFragment<ViewEvent>() {
 
             }
         }
-        viewModel.viewState.observe(viewLifecycleOwner, Observer {
-            it.peekContent().let {
-                btnFacebook.makeGone()
-                btnTwitter.makeGone()
-                it.weather?.let {
-                    it.main.let {
-                        val printedText = "Temp: ${it.temp}\nMax: ${it.max}\nMin: ${it.min} "
-                        img.text = printedText
-                    }
-
-                    btnFacebook.makeVisible()
-                    btnTwitter.makeVisible()
-                }
-                if (it.loadingWeather) {
-                    pb.makeVisible()
-                } else {
-                    pb.makeGone()
-                }
-                if (it.exception != null) {
-                    tvError.makeVisible()
-                } else {
-                    tvError.makeGone()
-                }
-            }
-        })
-        viewEvent.observe(viewLifecycleOwner, Observer {
-            it.getContentIfNotHandled()?.let { viewModel.postEvent(it) }
-        })
     }
 
     private fun setCancellationListener() {
@@ -165,9 +179,11 @@ class ImageFragment : BaseFragment<ViewEvent>() {
 
     companion object {
         const val IMAGE_PATH = "path"
-        fun createWithPath(path: String) = ImageFragment().apply {
+        const val RELOAD = "reload"
+        fun createWithPath(path: String, reload: Boolean = true) = ImageFragment().apply {
             arguments = Bundle().apply {
                 putString(IMAGE_PATH, path)
+                putBoolean(RELOAD, reload)
             }
         }
     }

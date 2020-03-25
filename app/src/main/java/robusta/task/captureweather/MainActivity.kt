@@ -14,6 +14,5 @@ class MainActivity : AppCompatActivity() {
         supportFragmentManager.beginTransaction()
             .replace(R.id.fragment_container, CameraFragment(), "camera")
             .commit()
-        Log.d(TAG, "home: $filesDir")
     }
 }

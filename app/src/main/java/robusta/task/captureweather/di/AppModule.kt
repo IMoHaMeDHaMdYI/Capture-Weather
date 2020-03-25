@@ -4,11 +4,14 @@ import com.squareup.moshi.Moshi
 import com.squareup.moshi.kotlin.reflect.KotlinJsonAdapterFactory
 import okhttp3.OkHttpClient
 import okhttp3.logging.HttpLoggingInterceptor
+import org.koin.android.ext.koin.androidContext
 import org.koin.android.viewmodel.dsl.viewModel
 import org.koin.dsl.module
 import retrofit2.Retrofit
 import retrofit2.converter.moshi.MoshiConverterFactory
 import robusta.task.captureweather.common.Repo
+import robusta.task.captureweather.common.utils.FileHelper
+import robusta.task.captureweather.history.HistoryViewModel
 import robusta.task.captureweather.image.ImageViewModel
 import robusta.task.captureweather.weather.data.WeatherService
 import java.util.concurrent.TimeUnit
@@ -22,9 +25,11 @@ val appModule = module {
         createWebService(get(), get(), getProperty("base_url"))
     }
 
+    factory { FileHelper(androidContext()) }
     factory { Repo(get()) }
 
-    viewModel { ImageViewModel(get()) }
+    viewModel { (reload: Boolean) -> ImageViewModel(get(), get(), reload) }
+    viewModel { HistoryViewModel(get()) }
 }
 
 

@@ -1,11 +1,19 @@
 package robusta.task.captureweather.image
 
+import android.graphics.Bitmap
 import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.launch
 import robusta.task.captureweather.base.BaseViewModel
 import robusta.task.captureweather.common.Repo
+import robusta.task.captureweather.common.utils.FileHelper
+import robusta.task.captureweather.common.utils.saveBitmap
 
-class ImageViewModel(private val repo: Repo) : BaseViewModel<ViewState, ViewEvent>() {
+class ImageViewModel(
+    private val repo: Repo,
+    private val fileHelper: FileHelper,
+    val reload: Boolean
+) :
+    BaseViewModel<ViewState, ViewEvent>() {
     private fun getWeather(lat: Double, lon: Double) = launch {
         postState(viewStateValue().copy(loadingWeather = true))
         // This is supposed to be in a use case to handle the mapping and return a result
@@ -23,7 +31,9 @@ class ImageViewModel(private val repo: Repo) : BaseViewModel<ViewState, ViewEven
     }
 
     override fun initViewState() {
-        postState(ViewState())
+        if (reload)
+            postState(ViewState())
+        else postState(ViewState(loadingWeather = false))
     }
 
     override fun postEvent(event: ViewEvent) {
@@ -31,9 +41,18 @@ class ImageViewModel(private val repo: Repo) : BaseViewModel<ViewState, ViewEven
             is ViewEvent.GetWeather -> {
                 getWeather(event.lat, event.lng)
             }
-            ViewEvent.SaveImage -> {
-
+            is ViewEvent.SaveImage -> {
+                saveBitmapFile(fileHelper, event.bitmap)
             }
         }
+    }
+
+    private fun saveBitmapFile(fileHelper: FileHelper, bitmap: Bitmap) = launch {
+        postState(
+            viewStateValue().copy(
+                file = saveBitmap(fileHelper, bitmap),
+                loadingWeather = true
+            )
+        )
     }
 }

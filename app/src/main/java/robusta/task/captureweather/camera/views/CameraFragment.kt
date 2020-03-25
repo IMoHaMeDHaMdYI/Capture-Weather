@@ -1,6 +1,7 @@
 package robusta.task.captureweather.camera.views
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Bundle
 import android.view.LayoutInflater
@@ -16,6 +17,7 @@ import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
 import robusta.task.captureweather.common.utils.FileHelper
+import robusta.task.captureweather.history.HistoryActivity
 import robusta.task.captureweather.image.ImageFragment
 import java.io.File
 
@@ -43,15 +45,14 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         askForPermission()
-        val fileHelper = FileHelper(requireContext())
         cameraView.setLifecycleOwner(viewLifecycleOwner)
         cameraView.addCameraListener(object : CameraListener() {
             override fun onPictureTaken(result: PictureResult) {
                 super.onPictureTaken(result)
-                result.toFile(fileHelper.newFile("png")) {
+                result.toFile(File.createTempFile("temp", "png")) {
                     it?.let {
-                        finishLoading()
                         openFragment(it.path)
+                        finishLoading()
                         return@toFile
                     }
                 }
@@ -64,6 +65,14 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
             } else {
                 askForPermission()
             }
+        }
+        imgHistory.setOnClickListener {
+            startActivity(
+                Intent(
+                    requireContext(),
+                    HistoryActivity::class.java
+                )
+            )
         }
     }
 
