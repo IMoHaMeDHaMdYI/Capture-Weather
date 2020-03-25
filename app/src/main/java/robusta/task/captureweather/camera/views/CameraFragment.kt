@@ -15,6 +15,7 @@ import robusta.task.captureweather.base.BaseFragment
 import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
+import robusta.task.captureweather.common.utils.FileHelper
 import robusta.task.captureweather.image.ImageFragment
 import java.io.File
 
@@ -42,11 +43,12 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         askForPermission()
+        val fileHelper = FileHelper(requireContext())
         cameraView.setLifecycleOwner(viewLifecycleOwner)
         cameraView.addCameraListener(object : CameraListener() {
             override fun onPictureTaken(result: PictureResult) {
                 super.onPictureTaken(result)
-                result.toFile(File.createTempFile("temp", "png")) {
+                result.toFile(fileHelper.newFile("png")) {
                     it?.let {
                         finishLoading()
                         openFragment(it.path)
@@ -94,7 +96,7 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
             ContextCompat.checkSelfPermission(
                 requireContext(),
                 it
-            ) == PackageManager.PERMISSION_GRANTED
+            ) != PackageManager.PERMISSION_GRANTED
         }
         if (neededPermissions.isNotEmpty()) {
             requestPermissions(neededPermissions.toTypedArray(), permissionsRequest)
