@@ -1,3 +1,5 @@
 package robusta.task.captureweather.camera.views
 
-data class CameraViewState(val permissionGranted: Boolean = false)
+import android.graphics.Bitmap
+
+data class CameraViewState(val bitmap: Bitmap? = null)

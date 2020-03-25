@@ -2,35 +2,27 @@ package robusta.task.captureweather.camera.views
 
 import android.Manifest
 import android.content.pm.PackageManager
-import android.graphics.Bitmap
 import android.os.Bundle
-import android.util.Log
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
-import androidx.camera.core.ImageCapture
-import androidx.camera.core.ImageCaptureException
-import androidx.camera.core.impl.ImageCaptureConfig
 import androidx.core.content.ContextCompat
-import androidx.lifecycle.Observer
-import com.otaliastudios.cameraview.BitmapCallback
 import com.otaliastudios.cameraview.CameraListener
 import com.otaliastudios.cameraview.PictureResult
 import kotlinx.android.synthetic.main.fragment_camera.*
-import org.koin.android.viewmodel.ext.android.viewModel
 import robusta.task.captureweather.R
 import robusta.task.captureweather.base.BaseFragment
-import robusta.task.captureweather.camera.viewmodels.CameraViewModel
 import robusta.task.captureweather.common.extenstions.TAG
+import robusta.task.captureweather.common.extenstions.makeGone
+import robusta.task.captureweather.common.extenstions.makeVisible
+import robusta.task.captureweather.image.ImageFragment
 import java.io.File
-import java.util.concurrent.ExecutorService
-import java.util.concurrent.Executors
+
 
 class CameraFragment : BaseFragment<CameraViewEvent>() {
-    private val viewModel: CameraViewModel by viewModel()
     private val permissionsRequest = 0
     private var permissionGranted = false
-    private val cameraExecutor = Executors.newSingleThreadExecutor()
+    private var imageFragment: ImageFragment? = null
     private val permissions = arrayOf(
         Manifest.permission.CAMERA,
         Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -46,26 +38,26 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
             .inflate(R.layout.fragment_camera, container, false)
     }
 
+
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         askForPermission()
         cameraView.setLifecycleOwner(viewLifecycleOwner)
-        viewEvent.observe(viewLifecycleOwner, Observer {
-            it.getContentIfNotHandled()?.let { event ->
-                viewModel.postEvent(event)
-            }
-        })
         cameraView.addCameraListener(object : CameraListener() {
             override fun onPictureTaken(result: PictureResult) {
                 super.onPictureTaken(result)
-                result.toBitmap {
-                    img.setImageBitmap(it)
+                result.toFile(File.createTempFile("temp", "png")) {
+                    it?.let {
+                        finishLoading()
+                        openFragment(it.path)
+                        return@toFile
+                    }
                 }
             }
-            // And much more
         })
         viewCapture.setOnClickListener {
             if (permissionGranted) {
+                startLoading()
                 takePicture()
             } else {
                 askForPermission()
@@ -73,9 +65,28 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
         }
     }
 
+
+    private fun openFragment(path: String) {
+        imageFragment = ImageFragment.createWithPath(path)
+        requireActivity().supportFragmentManager.beginTransaction().add(
+            R.id.fragment_container, imageFragment!!, imageFragment!!.TAG
+        ).addToBackStack(imageFragment!!.TAG)
+            .commit()
+    }
+
     private fun takePicture() {
         cameraView.takePicture();
+    }
 
+
+    private fun startLoading() {
+        viewCapture.makeGone()
+        pb.makeVisible()
+    }
+
+    private fun finishLoading() {
+        viewCapture.makeVisible()
+        pb.makeGone()
     }
 
     private fun askForPermission() {
@@ -98,7 +109,7 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
         grantResults: IntArray
     ) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
-        if (requestCode == permissionsRequest && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+        if (requestCode == permissionsRequest && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             permissionGranted = true
         }
     }

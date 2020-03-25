@@ -1,8 +1,11 @@
 package robusta.task.captureweather.camera.views
 
+import android.graphics.Bitmap
+
 sealed class CameraViewEvent {
     object Capture : CameraViewEvent()
-    object Save : CameraViewEvent()
+    class Save(val bitmap: Bitmap) : CameraViewEvent()
+
     object Cancel : CameraViewEvent()
     object StartCamera : CameraViewEvent()
 }
