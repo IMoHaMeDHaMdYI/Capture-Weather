@@ -8,24 +8,21 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import androidx.core.content.ContextCompat
+import androidx.fragment.app.Fragment
 import com.otaliastudios.cameraview.CameraListener
 import com.otaliastudios.cameraview.PictureResult
 import kotlinx.android.synthetic.main.fragment_camera.*
 import robusta.task.captureweather.R
-import robusta.task.captureweather.base.BaseFragment
-import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
-import robusta.task.captureweather.common.utils.FileHelper
 import robusta.task.captureweather.history.HistoryActivity
 import robusta.task.captureweather.image.ImageFragment
 import java.io.File
 
 
-class CameraFragment : BaseFragment<CameraViewEvent>() {
+class CameraFragment : Fragment() {
     private val permissionsRequest = 0
     private var permissionGranted = false
-    private var imageFragment: ImageFragment? = null
     private val permissions = arrayOf(
         Manifest.permission.CAMERA,
         Manifest.permission.READ_EXTERNAL_STORAGE,
@@ -78,15 +75,16 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
 
 
     private fun openFragment(path: String) {
-        imageFragment = ImageFragment.createWithPath(path)
-        requireActivity().supportFragmentManager.beginTransaction().add(
-            R.id.fragment_container, imageFragment!!, imageFragment!!.TAG
-        ).addToBackStack(imageFragment!!.TAG)
-            .commit()
+        ImageFragment.createWithPath(path).let {
+            requireActivity().supportFragmentManager.beginTransaction().add(
+                R.id.fragment_container, it, it::class.java.simpleName
+            ).addToBackStack(it::class.java.simpleName)
+                .commit()
+        }
     }
 
     private fun takePicture() {
-        cameraView.takePicture();
+        cameraView.takePicture()
     }
 
 
@@ -112,6 +110,13 @@ class CameraFragment : BaseFragment<CameraViewEvent>() {
         } else {
             permissionGranted = true
         }
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
+        requireContext().cacheDir?.deleteRecursively()
+        requireContext().codeCacheDir?.deleteRecursively()
+
     }
 
     override fun onRequestPermissionsResult(

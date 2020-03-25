@@ -1,7 +1,6 @@
 package robusta.task.captureweather.image
 
 import android.graphics.Bitmap
-import androidx.lifecycle.ViewModel
 import kotlinx.coroutines.launch
 import robusta.task.captureweather.base.BaseViewModel
 import robusta.task.captureweather.common.Repo

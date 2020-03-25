@@ -2,9 +2,7 @@ package robusta.task.captureweather
 
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
-import android.util.Log
 import robusta.task.captureweather.camera.views.CameraFragment
-import robusta.task.captureweather.common.extenstions.TAG
 
 class MainActivity : AppCompatActivity() {
 

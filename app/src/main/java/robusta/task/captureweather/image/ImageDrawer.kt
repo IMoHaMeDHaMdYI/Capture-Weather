@@ -2,17 +2,14 @@ package robusta.task.captureweather.image
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.os.Build
 import android.text.Layout
 import android.text.StaticLayout
 import android.text.TextPaint
-import android.util.Log
 import androidx.annotation.RequiresApi
 import androidx.core.graphics.withTranslation
-import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.utils.spToPx
 
 class ImageDrawer {
@@ -26,7 +23,6 @@ class ImageDrawer {
         val canvas = Canvas(bitmap)
         textPaint.textSize = spToPx(24f, context)
         canvas.drawBitmap(bitmap, 0f, 0f, imagePaint)
-        Log.d(TAG, text)
         val textLayout = createStaticLayout(text, 0, text.length, bitmap.width)
         textLayout.let {
             val textLeft = (bitmap.width - it.width) / 2f

@@ -9,7 +9,6 @@ import com.bumptech.glide.Glide
 import kotlinx.android.synthetic.main.item_thumbnail.view.*
 import robusta.task.captureweather.R
 import java.io.File
-import java.nio.file.Path
 
 class HistoryAdapter(private val onClick: (item: ImagePath) -> Unit) :
     ListAdapter<ImagePath, HistoryAdapter.ViewHolder>(ImagePath) {

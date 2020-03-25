@@ -1,28 +1,36 @@
 package robusta.task.captureweather.image
 
 import android.Manifest
+import android.content.Context
+import android.content.DialogInterface
+import android.content.Intent
 import android.content.pm.PackageManager
+import android.location.LocationManager
 import android.os.Bundle
-import android.util.Log
+import android.provider.Settings
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.appcompat.app.AlertDialog
 import androidx.core.content.ContextCompat
+import androidx.core.content.ContextCompat.getSystemService
 import androidx.lifecycle.Observer
 import com.bumptech.glide.Glide
 import com.google.android.gms.location.FusedLocationProviderClient
 import com.google.android.gms.location.LocationServices
 import kotlinx.android.synthetic.main.fragment_image.*
-import org.koin.android.ext.android.inject
 import org.koin.android.viewmodel.ext.android.viewModel
 import org.koin.core.parameter.parametersOf
 import robusta.task.captureweather.R
 import robusta.task.captureweather.base.BaseFragment
-import robusta.task.captureweather.common.extenstions.TAG
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
 import robusta.task.captureweather.common.extenstions.toast
-import robusta.task.captureweather.common.utils.*
+import robusta.task.captureweather.common.utils.ImageProvider
+import robusta.task.captureweather.common.utils.getBitmap
+import robusta.task.captureweather.common.utils.shareFacebook
+import robusta.task.captureweather.common.utils.shareTwitter
+
 
 class ImageFragment : BaseFragment<ViewEvent>() {
     private val viewModel: ImageViewModel by viewModel {
@@ -36,7 +44,10 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     private var permissionGranted = false
     private val permissions = arrayOf(
         Manifest.permission.ACCESS_COARSE_LOCATION,
-        Manifest.permission.ACCESS_FINE_LOCATION
+        Manifest.permission.ACCESS_FINE_LOCATION,
+        Manifest.permission.WRITE_EXTERNAL_STORAGE,
+        Manifest.permission.READ_EXTERNAL_STORAGE
+
     )
 
     override fun onCreateView(
@@ -97,6 +108,7 @@ class ImageFragment : BaseFragment<ViewEvent>() {
                 }
                 if (it.exception != null) {
                     tvError.makeVisible()
+                    tvError.text = it.exception.localizedMessage ?: "Unknown Error"
                 } else {
                     tvError.makeGone()
                 }
@@ -155,7 +167,6 @@ class ImageFragment : BaseFragment<ViewEvent>() {
         if (neededPermissions.isNotEmpty()) {
             requestPermissions(neededPermissions.toTypedArray(), permissionsRequest)
         } else {
-            setLocationListener()
             permissionGranted = true
         }
     }
@@ -168,14 +179,13 @@ class ImageFragment : BaseFragment<ViewEvent>() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == permissionsRequest && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             permissionGranted = true
-            setLocationListener()
+            checkGPSStatus()
         }
     }
 
     private fun setLocationListener() {
         fusedLocation.lastLocation.addOnSuccessListener {
             it?.let { location ->
-                Log.d(TAG, "hereee")
                 postEvent(ViewEvent.GetWeather(location.latitude, location.longitude))
                 return@addOnSuccessListener
             }
@@ -185,6 +195,44 @@ class ImageFragment : BaseFragment<ViewEvent>() {
             context?.toast(getString(R.string.error_detecting_location))
             it.printStackTrace()
         }
+    }
+
+    private var locationManager: LocationManager? = null
+    private var gps_enabled = false
+    private var network_enabled = false
+
+    private fun checkGPSStatus() {
+        if (locationManager == null) {
+            locationManager =
+                requireContext().getSystemService(Context.LOCATION_SERVICE) as LocationManager?
+        }
+        try {
+            gps_enabled = locationManager!!.isProviderEnabled(LocationManager.GPS_PROVIDER)
+            network_enabled = locationManager!!.isProviderEnabled(LocationManager.NETWORK_PROVIDER)
+        } catch (ex: java.lang.Exception) {
+
+        }
+        if (!gps_enabled && !network_enabled) {
+            val dialog: AlertDialog.Builder = AlertDialog.Builder(requireContext())
+            dialog.setMessage("GPS not enabled")
+            dialog.setPositiveButton(
+                "Ok"
+            ) { _, _ ->
+                //this will navigate user to the device location settings screen
+                val intent =
+                    Intent(Settings.ACTION_LOCATION_SOURCE_SETTINGS)
+                startActivity(intent)
+            }
+            val alert: AlertDialog = dialog.create()
+            alert.show()
+        } else {
+            setLocationListener()
+        }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        checkGPSStatus()
     }
 
     companion object {
