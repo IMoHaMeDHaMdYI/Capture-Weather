@@ -61,7 +61,7 @@ class ImageFragment : BaseFragment<ViewEvent>() {
 
     lateinit var path: String
 
-    private lateinit var fusedLocation: FusedLocationProviderClient
+    private var fusedLocation: FusedLocationProviderClient? = null
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         path =
@@ -186,7 +186,10 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     }
 
     private fun setLocationListener() {
-        fusedLocation.lastLocation.addOnSuccessListener {
+        if (fusedLocation == null) {
+            fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
+        }
+        fusedLocation!!.lastLocation.addOnSuccessListener {
             it?.let { location ->
                 postEvent(ViewEvent.GetWeather(location.latitude, location.longitude))
                 return@addOnSuccessListener
