@@ -64,7 +64,6 @@ class ImageFragment : BaseFragment<ViewEvent>() {
     private lateinit var fusedLocation: FusedLocationProviderClient
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
         path =
             requireArguments().getString(IMAGE_PATH) ?: throw IllegalStateException(
                 "This Fragment must be initialized using ImageFragment.createWithFile(path: String)"
@@ -179,7 +178,10 @@ class ImageFragment : BaseFragment<ViewEvent>() {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         if (requestCode == permissionsRequest && grantResults.isNotEmpty() && grantResults[0] == PackageManager.PERMISSION_GRANTED) {
             permissionGranted = true
+            fusedLocation = LocationServices.getFusedLocationProviderClient(requireContext())
             checkGPSStatus()
+        } else {
+            askForPermission()
         }
     }
 
@@ -230,7 +232,8 @@ class ImageFragment : BaseFragment<ViewEvent>() {
             val alert: AlertDialog = dialog.create()
             alert.show()
         } else {
-            setLocationListener()
+            if (permissionGranted)
+                setLocationListener()
         }
     }
 
