@@ -15,9 +15,11 @@ import kotlinx.android.synthetic.main.fragment_camera.*
 import robusta.task.captureweather.R
 import robusta.task.captureweather.common.extenstions.makeGone
 import robusta.task.captureweather.common.extenstions.makeVisible
+import robusta.task.captureweather.common.extenstions.toast
 import robusta.task.captureweather.history.HistoryActivity
 import robusta.task.captureweather.image.ImageFragment
 import java.io.File
+import java.lang.Exception
 
 
 class CameraFragment : Fragment() {
@@ -46,12 +48,16 @@ class CameraFragment : Fragment() {
         cameraView.addCameraListener(object : CameraListener() {
             override fun onPictureTaken(result: PictureResult) {
                 super.onPictureTaken(result)
-                result.toFile(File.createTempFile("temp", "png")) {
-                    it?.let {
-                        openFragment(it.path)
-                        finishLoading()
-                        return@toFile
+                try {
+                    result.toFile(File.createTempFile("temp", "png")) {
+                        it?.let {
+                            openFragment(it.path)
+                            finishLoading()
+                            return@toFile
+                        }
                     }
+                } catch (e: Exception){
+                    requireContext().toast(getString(R.string.file_creation_problem))
                 }
             }
         })

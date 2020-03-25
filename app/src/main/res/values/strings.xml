@@ -7,4 +7,5 @@
     <string name="dont_have_facebook">You Don\'t Have Facebook</string>
     <string name="save">Save</string>
     <string name="thumbnail_to_fullscreen_transition">thumbnail to fullscreen</string>
+    <string name="file_creation_problem">Couldn\'t Create Image File, Try Again</string>
 </resources>
