@@ -1,13 +1,12 @@
 package robusta.task.captureweather.history
 
-import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
+import androidx.appcompat.app.AppCompatActivity
 import androidx.lifecycle.Observer
 import kotlinx.android.synthetic.main.activity_history.*
 import org.koin.android.viewmodel.ext.android.viewModel
 import robusta.task.captureweather.R
 import robusta.task.captureweather.common.extenstions.TAG
-import robusta.task.captureweather.common.utils.FileHelper
 import robusta.task.captureweather.image.ImageFragment
 
 class HistoryActivity : AppCompatActivity() {
